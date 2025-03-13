@@ -38,7 +38,7 @@ Thumbs.db
 
 # Data files #
 ##############
-.csv
-.xls
-.xlsx
-.pdf
+*.csv
+*.xls
+*.xlsx
+*.pdf
