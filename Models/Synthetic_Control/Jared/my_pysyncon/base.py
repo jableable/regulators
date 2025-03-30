@@ -107,6 +107,69 @@ class BaseSynth(metaclass=ABCMeta):
         plt.grid(grid)
         plt.show()
 
+
+    def path_plot_orig(
+        self,
+        time_period: Optional[IsinArg_t] = None,
+        treatment_time: Optional[int] = None,
+        grid: bool = True,
+        Z0: Optional[pd.DataFrame] = None,
+        Z1: Optional[pd.Series] = None,
+    ) -> None:
+        """Plot the outcome variable over time for the treated unit and the
+        synthetic control.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time range to plot, if none is supplied then the time range used
+            is the time period over which the optimisation happens, by default
+            None
+        treatment_time : int, optional
+            If supplied, plot a vertical line at the time period that the
+            treatment time occurred, by default None
+        grid : bool, optional
+            Whether or not to plot a grid, by default True
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
+
+        Raises
+        ------
+        ValueError
+            If there is no weight matrix available
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
+        """
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+        elif Z0 is None or Z1 is None:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+
+        ts_synthetic = self._synthetic(Z0=Z0)
+        plt.plot(Z1, color="black", linewidth=1, label=Z1.name)
+        plt.plot(
+            ts_synthetic,
+            color="black",
+            linewidth=1,
+            linestyle="dashed",
+            label="Synthetic",
+        )
+
+        if self.dataprep is not None:
+            plt.ylabel(self.dataprep.dependent)
+        if treatment_time:
+            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
+        plt.legend()
+        plt.grid(grid)
+        plt.show()
+
+
     def _gaps(self, Z0: pd.DataFrame, Z1: pd.Series) -> pd.Series:
         """Calculate the gaps (difference between factual
         and estimated counterfactual)
