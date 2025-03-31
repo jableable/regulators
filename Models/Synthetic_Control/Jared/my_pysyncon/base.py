@@ -96,7 +96,7 @@ class BaseSynth(metaclass=ABCMeta):
         # change YYYY-MM-DD format to YYYY
         years = pd.to_datetime(time_period).year
         xticks = plt.gca().get_xticks()
-        xticks = xticks[::5]
+        xticks = xticks[::int(len(xticks)/5)]
         plt.xticks(xticks, [f'{years[i]}' for i in xticks])
 
         if self.dataprep is not None:
