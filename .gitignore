@@ -40,11 +40,12 @@ Thumbs.db
 
 # Data files #
 ##############
-*.csv
+# *.csv
 *.xls
 *.xlsx
 *.pdf
 
 # Specific directories #
 ########################
-SharedData/
+# SharedData/
+Models/Synthetic_Control/Lexie/
