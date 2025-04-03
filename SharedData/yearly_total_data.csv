@@ -1,4 +1,4 @@
-,state,year,yearly_population,prcp,snow,tavg,yearly_gdp_rel_2017,yearly_energy_prod,yearly_energy_use,yearly_energy_flow,yearly_num_plants,yearly_pop_density,yearly_energy_renew,yearly_energy_fossil,yearly_energy_total,yearly_renew_pct,yearly_fossil_pct,total_co2
+,state,year,yearly_population,prcp,snow,tavg,yearly_gdp_rel_2017,yearly_energy_prod,yearly_energy_use,yearly_energy_flow,yearly_num_plants,yearly_pop_density,yearly_energy_renew,yearly_energy_fossil,yearly_energy_total,yearly_renew_pct,yearly_fossil_pct,yearly_emissions
 0,AL,1990,4050055.0,6.0225,0.0,63.15833333333333,,1269484.0,1599432.0,-329948.0,,0.0129437748376256,10366507.0,54816918.0,79652133.0,0.1301472617186535,0.6882040183406012,56654403.024009995
 1,AL,1991,4099156.0,5.857499999999999,0.0,62.416666666666664,,1300485.0,1618216.0,-317731.0,,0.012788730167868698,10757723.0,59613166.0,88786612.0,0.1211637966318615,0.6714206641875241,61056806.49739
 2,AL,1992,4154014.0,4.635833333333333,0.016666666666666666,60.041666666666664,,1413636.0,1691870.0,-278234.0,,0.0126198419167581,10260023.0,62751600.0,95234422.0,0.1077343967079466,0.6589172137780182,64188235.51767
