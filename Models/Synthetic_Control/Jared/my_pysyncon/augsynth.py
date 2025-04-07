@@ -21,6 +21,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
         super().__init__()
         self.lambda_: Optional[float] = None
         self.cv_result: Optional[CrossValidationResult] = None
+        # Initialize the outcome matrices to be used in MSPE
+        self.Z0 = None
+        self.Z1 = None
 
     def fit(self, dataprep: Dataprep, lambda_: Optional[float] = None) -> None:
         """Fit the model/calculate the weights.
@@ -41,6 +44,10 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
         self.dataprep = dataprep
         Z0, Z1 = self.dataprep.make_covariate_mats()
         X0, X1 = self.dataprep.make_outcome_mats()
+        
+        # Store the outcome matrices
+        self.Z0 = X0
+        self.Z1 = X1
 
         X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
         X0_stacked = pd.concat([X0_demean, Z0_normal], axis=0)
