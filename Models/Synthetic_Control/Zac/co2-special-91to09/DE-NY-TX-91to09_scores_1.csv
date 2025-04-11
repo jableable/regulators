@@ -1,0 +1,13 @@
+,Features,AvgLossSyn
+0,['monthly_emissions'],0.006627227580234749
+0,['prcp'],0.005763238725673572
+0,['snow'],0.004852631583428613
+0,['tavg'],0.004938096169254313
+0,['gdp_rel_2017_interp'],0.05971289638909149
+0,['monthly_energy_prod'],0.003836618685877242
+0,['monthly_energy_use'],0.006765212102286963
+0,['monthly_energy_flow'],0.0051609166474634255
+0,['monthly_renew_pct'],0.007497147709172574
+0,['monthly_fossil_pct'],0.005043360547804291
+0,['monthly_pop_density'],0.0051979826473632215
+0,['monthly_emissions_sma'],0.006636998980791433
