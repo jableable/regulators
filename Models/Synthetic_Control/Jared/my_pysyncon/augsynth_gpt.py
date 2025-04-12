@@ -2,10 +2,12 @@ from __future__ import annotations
 from typing import Optional
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 from .dataprep import Dataprep
 from .base import BaseSynth, VanillaOptimMixin
 from .utils import HoldoutSplitter, CrossValidationResult
+
 
 
 class AugSynthGPT(BaseSynth, VanillaOptimMixin):
@@ -25,6 +27,84 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         # These will store the outcome matrices for evaluation/diagnostics.
         self.Z0 = None  
         self.Z1 = None
+
+    def _normalize(
+        self, X0: pd.DataFrame, X1: pd.Series, Z0: pd.DataFrame, Z1: pd.Series
+    ) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+        """Normalize the data before the weight calculation."""
+
+        # Demean the covariates (predictors)
+        X0_demean = X0.subtract(X0.mean(axis=1), axis=0)
+        X1_demean = X1.subtract(X0.mean(axis=1), axis=0)
+
+        # Demean the outcome
+        Z0_demean = Z0.subtract(Z0.mean(axis=1), axis=0)
+        Z1_demean = Z1.subtract(Z0.mean(axis=1), axis=0)
+
+        # Normalize the outcome to match the scale of the predictors
+        Z0_std = Z0_demean.std(axis=1)
+        X0_std = X0_demean.to_numpy().std(ddof=1).item()
+
+        Z0_normal = Z0_demean.divide(Z0_std, axis=0) * X0_std
+        Z1_normal = Z1_demean.divide(Z0_std, axis=0) * X0_std
+
+        return X0_demean, X1_demean, Z0_normal, Z1_normal
+    
+    def fit2(self, dataprep: Dataprep, lambda_: Optional[float] = None) -> None:
+        if (
+            isinstance(dataprep.treatment_identifier, (list, tuple)) and
+            len(dataprep.treatment_identifier) > 1
+        ):
+            raise ValueError("AugSynth requires exactly one treated unit.")
+
+        self.dataprep = dataprep
+
+        # Get predictor (covariate) matrices and outcomes
+        X0, X1 = dataprep.make_covariate_mats()
+        Z0, Z1 = dataprep.make_outcome_mats()
+        self.Z0, self.Z1 = Z0, Z1  # Save for MSPE or plotting
+
+        # Normalize predictors and outcomes
+        X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
+
+        # Stack for ridge adjustment
+        X0_stacked = pd.concat([X0_demean, Z0_normal], axis=0)
+        X1_stacked = pd.concat([X1_demean, Z1_normal], axis=0)
+
+        X0_arr = X0_demean.to_numpy()
+        X1_arr = X1_demean.to_numpy()
+        Z0_arr = Z0.to_numpy()
+        Z1_arr = Z1.to_numpy()
+
+        n_cov = X0_arr.shape[0]
+
+        # 🔍 Learn V using outer optimization (just like Synth)
+        def outer_loss(log_v_diag):
+            v_diag = np.exp(log_v_diag)
+            V = np.diag(v_diag / np.sum(v_diag))
+            W, _ = self.w_optimize(V_mat=V, X0=X0_arr, X1=X1_arr)
+            loss = (Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W) / len(Z0_arr)
+            return loss.item()
+
+        # Initial guess: log(1) = 0 for all entries
+        res = minimize(outer_loss, x0=np.zeros(n_cov), method='Nelder-Mead', options={"maxiter": 1000})
+        v_diag_opt = np.exp(res.x)
+        V_opt = np.diag(v_diag_opt / np.sum(v_diag_opt))
+        self.V = np.diag(V_opt)  # Save diagonal of V
+
+        # Final inner optimization using learned V
+        W, _ = self.w_optimize(V_mat=V_opt, X0=X0_arr, X1=X1_arr)
+
+        # Ridge adjustment
+        if lambda_ is None:
+            lambdas = self.generate_lambdas(X0)
+            self.cv_result = self.cross_validate(X0_arr, X1_arr, lambdas)
+            self.lambda_ = self.cv_result.best_lambda()
+        else:
+            self.lambda_ = lambda_
+
+        W_ridge = self.solve_ridge(X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_)
+        self.W = W + W_ridge
 
     def fit(self, dataprep: Dataprep, lambda_: Optional[float] = None) -> None:
         """
