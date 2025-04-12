@@ -5,3 +5,4 @@ from .synth import Synth
 from .augsynth import AugSynth
 from .robust import RobustSynth
 from .penalized import PenalizedSynth
+from .augsynth_gpt import AugSynthGPT
