@@ -4,18 +4,18 @@ state_sq_ft  ,,sq ft,None,,https://github.com/jakevdp/data-USstates/blob/master/
 year  ,,,None,,
 month  ,,,None,,
 date  ,YYYY-MM-DD Format,,None,,
+monthly_emissions  ,Monthyl CO2 power plant emissions,Short tons,None,,1990-1996 from https://www.eia.gov/environment/emissions/state/; 1997- from https://campd.epa.gov/
 monthly_population  ,Range over 1990-06 thru 2019-12,,All values outside of date range,,https://data.census.gov/
 yearly_population  ,Range over 1990-01 thru 2019-12,,All values outside of date range,,https://data.census.gov/
 monthly_pop_density  ,monthly_pop / state_sq_ft,,All values outside of date range,,https://data.census.gov/
 yearly_pop_density  ,yearly_pop / state_sq_ft,,All values outside of date range,,https://data.census.gov/
-monthly_emissions  ,Monthyl CO2 power plant emissions,Short tons,None,,1990-1996 from https://www.eia.gov/environment/emissions/state/; 1997- from https://campd.epa.gov/
 monthly_emissions_sma  ,Obtained from monthly_emissions as SMA with window=12,Short tons,Those missing due to SMA calculation,This isn't currently used anywhere (?),
 prcp  ,Rain? Maybe sleet?,In?,Ask Josh,,https://www.ncei.noaa.gov/cdo-web/search
 snow  ,Snow,In?,Ask Josh,,https://www.ncei.noaa.gov/cdo-web/search
 tavg  ,Average monthly temp,Deg?,Ask Josh,,https://www.ncei.noaa.gov/cdo-web/search
 gdp_rel_2017  ,GDP adjusted for inflation relative to 2017,Millions of USD,MANY values missing; values present for month=12 within years 1997-2023,Used to generate gdp_rel_2017_interp and yearly_gpd_rel_2017,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
-gdp_rel_2017_interp  ,Obtained from gdp_rel_2017 by linear interpolation,Millions of USD,"All values outside of 1997-12 thru 2023-12, and those missing due to interpolation",,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
-yearly_gdp_rel_2017  ,Obtained from gdp_rel_2017 by interpolation of copying value,Millions of USD,All values outside of 1997-12 thru 2023-12,,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
+monthly_gdp_rel_2017,"Obtained from yearly_gdp_rel_2017 by linear interpolation, then / 12",Millions of USD (rel 2017),All values outside of date range,,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
+yearly_gdp_rel_2017  ,Obtained from gdp_rel_2017 by interpolation of copying value,Millions of USD (rel 2017),All values outside of date range,,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
 monthly_energy_prod  ,Obtained by setting each year's month=12 equal to yearly_energy_prod/12 from that year; then linearly interpolating,Billion Btu,All values outside of 1990-01 thru 2022-12,Not missing interpolated values because data goes back to 1960,https://www.eia.gov/state/seds/seds-data-complete.php?sid=US#Keystatisticsrankings
 yearly_energy_prod  ,Energy produced per year,Billion Btu,All values outside of 1990-01 thru 2022-12,,https://www.eia.gov/state/seds/seds-data-complete.php?sid=US#Keystatisticsrankings
 monthly_energy_use  ,Obtained by setting each year's month=12 equal to yearly_energy_use/12 from that year; then linearly interpolating,Billion Btu,All values outside of 1990-01 thru 2022-12,Not missing interpolated values because data goes back to 1960,https://www.eia.gov/state/seds/seds-data-complete.php?sid=US#Keystatisticsrankings
