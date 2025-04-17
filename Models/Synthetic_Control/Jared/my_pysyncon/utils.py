@@ -244,6 +244,9 @@ class PlaceboTest:
 
         :meta private:
         """
+        # Force initialization of weights at zero if not already specified
+        scm_options.setdefault("optim_initial", "equal")
+
         scm.fit(dataprep=dataprep, **scm_options)
 
         Z0, Z1 = dataprep.make_outcome_mats(
@@ -254,65 +257,90 @@ class PlaceboTest:
         return synthetic.rename(dataprep.treatment_identifier), gaps.rename(
             dataprep.treatment_identifier
         )
-
+    
+    
     def gaps_plot(
         self,
-        time_period: Optional[IsinArg_t] = None,
+        time_period: Optional[list] = None,
         grid: bool = True,
-        treatment_time: Optional[int] = None,
+        treatment_time: Optional[Union[float, str, pd.Timestamp]] = None,
         mspe_threshold: Optional[float] = None,
         exclude_units: Optional[list] = None,
-    ):
-        """Plot the gaps between the treated unit and the synthetic control
-        for each placebo test.
-
+    ) -> None:
+        """
+        Plots the gap (treated minus synthetic) over time for both placebo units
+        and the treated unit.
+        
         Parameters
         ----------
-        time_period : Iterable | pandas.Series | dict, optional
-            Time range to plot, if none is supplied then the time range used
-            is the time period over which the optimisation happens, by default
-            None
+        time_period : list, optional
+            The list (or index) of time points to include in the plot. If None, uses
+            self.time_optimize_ssr.
         grid : bool, optional
-            Whether or not to plot a grid, by default True
-        treatment_time : int, optional
-            If supplied, plot a vertical line at the time period that the
-            treatment time occurred, by default None
+            Whether to show grid lines.
+        treatment_time : float, str, or pd.Timestamp, optional
+            The time at which treatment occurs; used both for drawing a vertical line
+            and to determine the pre-treatment period.
         mspe_threshold : float, optional
-            Remove any non-treated units whose MSPE pre-treatment is :math:`>`
-            mspe_threshold :math:`\\times` the MSPE of the treated unit pre-treatment.
-            This serves to exclude any non-treated units whose synthetic control
-            had a poor pre-treatment match to the actual relative to how the
-            actual treated unit matched pre-treatment.
-
-        Raises
-        ------
-        ValueError
-            if no placebo test has been run yet
-        ValueError
-            if `mspe_threshold` is supplied but `treatment_year` is not.
+            If provided, excludes donor units with poor pre-treatment fit.
+        exclude_units : list, optional
+            A list of donor unit names to exclude.
         """
-        if self.gaps is None:
+        import matplotlib.pyplot as plt
+
+        if self.gaps is None or self.treated_gap is None:
             raise ValueError("No gaps available; run a placebo test first.")
-        time_period = time_period if time_period is not None else self.time_optimize_ssr
 
-        gaps = self.gaps.drop(columns=exclude_units) if exclude_units else self.gaps
+        # Use provided time_period or fallback to default.
+        if time_period is None:
+            time_period = self.time_optimize_ssr
 
-        if mspe_threshold:
-            if not treatment_time:
+        # Drop any excluded donor units.
+        gaps = self.gaps.copy()
+        if exclude_units is not None:
+            gaps = gaps.drop(columns=exclude_units, errors="ignore")
+        
+        # Optionally filter placebo gaps by MSPE threshold (applied pre-treatment).
+        if mspe_threshold is not None:
+            if treatment_time is None:
                 raise ValueError("Need `treatment_time` to use `mspe_threshold`.")
             pre_mspe = gaps.loc[:treatment_time].pow(2).sum(axis=0)
-            pre_mspe_treated = self.treated_gap.loc[:treatment_time].pow(2).sum(axis=0)
-            keep = pre_mspe[pre_mspe < mspe_threshold * pre_mspe_treated].index
-            placebo_gaps = gaps[gaps.index.isin(time_period)][keep]
-        else:
-            placebo_gaps = gaps[gaps.index.isin(time_period)]
+            pre_mspe_treated = self.treated_gap.loc[:treatment_time].pow(2).sum()
+            valid_units = pre_mspe[pre_mspe < mspe_threshold * pre_mspe_treated].index
+            gaps = gaps[valid_units]
 
-        plt.plot(placebo_gaps, color="black", alpha=0.1)
-        plt.plot(self.treated_gap, color="black", alpha=1.0)
-        if treatment_time:
-            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
-        plt.grid(grid)
+        # Subset the time period for both donor gaps and the treated gap.
+        placebo_gaps = gaps.loc[gaps.index.isin(time_period)].copy()
+        treated_gap = self.treated_gap.loc[self.treated_gap.index.isin(time_period)].copy()
+
+        # Convert the index to datetime for consistency (if not already).
+        placebo_gaps.index = pd.to_datetime(placebo_gaps.index, errors="coerce")
+        treated_gap.index = pd.to_datetime(treated_gap.index, errors="coerce")
+
+            # Convert the provided treatment_time to datetime.
+        try:
+            treatment_time_dt = pd.to_datetime(treatment_time)
+        except Exception as e:
+            raise ValueError(f"Could not convert treatment_time to datetime: {e}")
+        # Plot the placebo donor gaps (light lines) and the treated gap (thick line).
+        plt.figure(figsize=(10, 6))
+        for col in placebo_gaps.columns:
+            plt.plot(placebo_gaps.index, placebo_gaps[col], color="black", alpha=0.1)
+        plt.plot(treated_gap.index, treated_gap, color="black", alpha=1.0, linewidth=2)
+
+        # Draw vertical line to indicate treatment time.
+        if treatment_time is not None:
+            plt.axvline(x=treatment_time_dt, linestyle="dashed")
+        if grid:
+            plt.grid(True)
+        plt.xlabel("Time")
+        plt.ylabel("Gap (Treated - Synthetic)")
+        plt.title("Gap Plot: Treated vs. Placebos")
         plt.show()
+
+
+
+
 
     def pvalue(self, treatment_time: int) -> float:
         """Calculate p-value of Abadie et al's version of Fisher's
