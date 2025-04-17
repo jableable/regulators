@@ -557,7 +557,7 @@ class VanillaOptimMixin:
         def fun(x):
             return 0.5 * x.T @ P @ x - q.T @ x
 
-        bounds = Bounds(lb=np.full(n_c, 0.0), ub=np.full(n_c, 1.0))
+        bounds = Bounds(lb=np.full(n_c, 0.0), ub=np.full(n_c, .5)) # restricts weight to be 0.0 <= w <= 0.5
         constraints = LinearConstraint(A=np.full(n_c, 1.0), lb=1.0, ub=1.0)
 
         x0 = np.full(n_c, 1 / n_c)

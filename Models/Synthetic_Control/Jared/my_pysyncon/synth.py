@@ -256,6 +256,42 @@ class Synth(BaseSynth, VanillaOptimMixin):
         V = pd.Series(self.V, index=summary_ser.index, name="V")
         return pd.concat([V, summary_ser], axis=1).round(round)
 
+    def summary_with_variance(self, round: int = 3, X0: Optional[pd.DataFrame] = None, X1: Optional[pd.Series] = None) -> pd.DataFrame:
+        """Extended summary that includes the variance and skewness of each covariate."""
+        if self.V is None:
+            raise ValueError("No V matrix available; fit model first.")
+
+        # Use stored dataprep if X0 and X1 are not provided.
+        if self.dataprep is not None:
+            X0, X1 = self.dataprep.make_covariate_mats()
+        elif X0 is None or X1 is None:
+            raise ValueError("No dataprep or covariate matrices provided.")
+
+        if not isinstance(X0, pd.DataFrame) or not isinstance(X1, pd.Series):
+            raise TypeError("X0 must be a DataFrame and X1 must be a Series.")
+
+        # Compute synthetic values using weights
+        synth_vals = X0 @ self.W
+
+        # Compute equal-weighted sample mean of the covariates
+        sample_mean = X0.mean(axis=1)
+
+        # Calculate the variance and skewness of each predictor (row-wise across units)
+        predictor_variance = X0.var(axis=1)
+        predictor_skewness = X0.skew(axis=1)
+
+        # Create a summary DataFrame
+        summary_df = pd.DataFrame({
+            "V": self.V,  # V weights per predictor
+            "Treated": X1,
+            "Synthetic": synth_vals,
+            "Sample Mean": sample_mean,
+            "Variance": predictor_variance,
+            "Skewness": predictor_skewness
+        })
+
+        return summary_df.round(round)
+
     def confidence_interval(
         self,
         alpha: float,

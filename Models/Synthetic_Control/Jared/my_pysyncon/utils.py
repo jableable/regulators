@@ -3,6 +3,7 @@ from typing import Optional, Union
 from concurrent import futures
 import copy
 from dataclasses import dataclass
+import scipy.stats.mstats as mstats
 
 import numpy as np
 import pandas as pd
@@ -377,3 +378,12 @@ class PlaceboTest:
         return sum(
             rmspe.drop(index=self.treated_gap.name) >= rmspe.loc[self.treated_gap.name]
         ) / len(rmspe)
+
+def date_to_str(date):
+    return date.dt.strftime('%Y-%m-%d')
+
+def winsorize_series_preserve_nans(s, limits):
+    non_nan_mask = ~s.isna()
+    s_winsor = s.copy()
+    s_winsor[non_nan_mask] = mstats.winsorize(s[non_nan_mask], limits=limits)
+    return s_winsor
