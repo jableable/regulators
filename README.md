@@ -1,4 +1,5 @@
-# TEAM WHO REGULATES THE REGULATORS?: Evaluating CO2 Emissions Reduction Programs
+# TEAM WHO REGULATES THE REGULATORS?<br>Evaluating CO2 Emissions Reduction Programs
+
 Our primary goal was to ...
 
 <!-- ## About Team Who Regulates the Regulators?
