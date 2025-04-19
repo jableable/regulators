@@ -4,6 +4,7 @@ from concurrent import futures
 import copy
 from dataclasses import dataclass
 import scipy.stats.mstats as mstats
+from scipy.stats import boxcox
 
 import numpy as np
 import pandas as pd
@@ -340,9 +341,6 @@ class PlaceboTest:
         plt.show()
 
 
-
-
-
     def pvalue(self, treatment_time: int) -> float:
         """Calculate p-value of Abadie et al's version of Fisher's
         exact hypothesis test for no effect of treatment null, see also
@@ -379,11 +377,137 @@ class PlaceboTest:
             rmspe.drop(index=self.treated_gap.name) >= rmspe.loc[self.treated_gap.name]
         ) / len(rmspe)
 
+
 def date_to_str(date):
     return date.dt.strftime('%Y-%m-%d')
+
 
 def winsorize_series_preserve_nans(s, limits):
     non_nan_mask = ~s.isna()
     s_winsor = s.copy()
     s_winsor[non_nan_mask] = mstats.winsorize(s[non_nan_mask], limits=limits)
     return s_winsor
+
+
+def winsorize_pre_int(s, pre_mask, limits=(0.01, 0.01)):
+    s = s.copy()
+    non_nan_mask = s.notna()
+    
+    # Get pre-treatment non-NaN values
+    pre_mask_non_nan = pre_mask & non_nan_mask
+    pre_values = s[pre_mask_non_nan]
+    
+    if pre_values.empty:
+        return s  # nothing to winsorize
+    
+    # Winsorize the pre-treatment values using scipy
+    winsorized_pre = mstats.winsorize(pre_values, limits=limits)
+    
+    # Extract thresholds used (min and max values after winsorization)
+    lower_bound = winsorized_pre.min()
+    upper_bound = winsorized_pre.max()
+    
+    # Apply clipping to all non-NaN values using those thresholds
+    s.loc[non_nan_mask] = s.loc[non_nan_mask].clip(lower=lower_bound, upper=upper_bound)
+    
+    return s
+
+
+def boxcox_pre_int_v0(s, pre_mask, offset_eps=1e-6):
+    """
+    Applies a Box-Cox transformation to a pandas Series using only pre-treatment values
+    to estimate the lambda parameter. Applies the same transformation to the full Series.
+    
+    Parameters:
+        s (pd.Series): The full Series to transform (can include NaNs).
+        pre_mask (pd.Series[bool]): Boolean mask identifying pre-treatment values.
+        offset_eps (float): Small constant to shift data if nonpositive values exist.
+
+    Returns:
+        transformed (pd.Series): Box-Cox transformed series (NaNs preserved).
+        lambda_bc (float): The fitted Box-Cox lambda from pre-treatment data.
+        offset (float): The shift applied to make all values positive.
+    """
+    s = s.copy()
+    non_nan_mask = s.notna()
+
+    # Get pre-treatment non-NaN values
+    pre_vals = s[pre_mask & non_nan_mask]
+
+    if pre_vals.empty:
+        raise ValueError("Pre-treatment data contains no valid values.")
+
+    # Determine if a shift is needed to make values strictly positive
+    min_val = pre_vals.min()
+    offset = -min_val + offset_eps if min_val <= 0 else 0.0
+
+    # Estimate Box-Cox lambda using shifted pre-treatment values
+    pre_vals_shifted = pre_vals + offset
+    transformed_pre, lambda_bc = boxcox(pre_vals_shifted)
+
+    # Apply transformation to full series (only to non-NaN values)
+    s_shifted = s + offset
+    transformed_full = pd.Series(index=s.index, dtype=float)
+
+    if lambda_bc == 0:
+        transformed_full[non_nan_mask] = np.log(s_shifted[non_nan_mask])
+    else:
+        transformed_full[non_nan_mask] = ((s_shifted[non_nan_mask] ** lambda_bc) - 1) / lambda_bc
+
+    return transformed_full, lambda_bc, offset
+
+
+def boxcox_pre_int(df, features, pre_mask, post_mask, offset_eps=1e-6):
+    """
+    Applies Box-Cox transformations to selected features in a DataFrame using
+    pre-treatment data to estimate lambda, then applies the transformation to
+    the full series (pre and post), storing results in new columns.
+
+    Parameters:
+        df (pd.DataFrame): The dataframe with raw feature columns.
+        features (list): List of feature names to transform.
+        pre_mask (pd.Series[bool]): Boolean mask for pre-treatment period.
+        post_mask (pd.Series[bool]): Boolean mask for post-treatment period.
+        offset_eps (float): Small value to shift data if nonpositive values exist.
+
+    Returns:
+        pd.DataFrame: Modified dataframe with new _boxcox columns added.
+    """
+    df = df.copy()
+    
+    def apply_boxcox(x, lam, offset):
+        x_shifted = x + offset
+        if (x_shifted <= 0).any():
+            raise ValueError("There are still non-positive values after shifting!")
+        if lam == 0:
+            return np.log(x_shifted)
+        else:
+            return (np.power(x_shifted, lam) - 1) / lam
+
+    for feat in features:
+        print(f"\nFeature: {feat}")
+        trans_feat = feat + '_boxcox'
+        df[trans_feat] = np.nan  # Initialize column
+
+        # Pre-treatment transformation
+        pre_values = df.loc[pre_mask, feat].dropna()
+        min_val = pre_values.min()
+        print("Minimum value (non-NA) before shift:", min_val)
+
+        offset = -min_val + offset_eps if min_val <= 0 else 0.0
+        pre_shifted = pre_values + offset
+
+        if (pre_shifted <= 0).any():
+            raise ValueError(f"Pre-treatment values for '{feat}' are not strictly positive after shift.")
+
+        transformed_pre, lambda_bc = boxcox(pre_shifted)
+        print("Optimal lambda for Box-Cox transformation:", lambda_bc)
+
+        df.loc[pre_mask & df[feat].notna(), trans_feat] = transformed_pre
+
+        # Post-treatment transformation
+        post_values = df.loc[post_mask, feat].dropna()
+        transformed_post = apply_boxcox(post_values, lambda_bc, offset)
+        df.loc[post_mask & df[feat].notna(), trans_feat] = transformed_post
+
+    return df

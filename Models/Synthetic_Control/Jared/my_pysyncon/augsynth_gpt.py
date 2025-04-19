@@ -194,6 +194,7 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         W_ridge = self.solve_ridge(X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_)
         self.W = W + W_ridge
 
+
     def solve_ridge(
         self, A: np.ndarray, B: np.ndarray, W: np.ndarray, lambda_: float
     ) -> np.ndarray:
@@ -203,6 +204,7 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         M = A - B @ W
         N = np.linalg.inv(B @ B.T + lambda_ * np.identity(B.shape[0]))
         return M @ N @ B
+
 
     def cross_validate(self, X0: pd.DataFrame, X1: pd.Series, lambdas: np.ndarray, holdout_len: int = 1) -> CrossValidationResult:
         # Create identity matrix for the training portion.
@@ -226,6 +228,20 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         ses = np.array(res).std(axis=0) / np.sqrt(len(lambdas))
         return CrossValidationResult(lambdas, means, ses)
 
+
+    def generate_lambdas(
+        self, X: pd.DataFrame, lambda_min_ratio: float = 1e-8, n_lambda: int = 20
+    ) -> np.ndarray:
+        """Generate a suitable set of lambdas to run the cross-validation
+        procedure on.
+
+        :meta private:
+        """
+        _, sing, _ = np.linalg.svd(X.T)
+        lambda_max = sing[0].item() ** 2.0
+        scaler = lambda_min_ratio ** (1 / n_lambda)
+        return lambda_max * (scaler ** np.array(range(n_lambda)))
+    
 
     def summary(
         self,
@@ -299,15 +315,3 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         return summary_df.round(round)
 
 
-    def generate_lambdas(
-        self, X: pd.DataFrame, lambda_min_ratio: float = 1e-8, n_lambda: int = 20
-    ) -> np.ndarray:
-        """Generate a suitable set of lambdas to run the cross-validation
-        procedure on.
-
-        :meta private:
-        """
-        _, sing, _ = np.linalg.svd(X.T)
-        lambda_max = sing[0].item() ** 2.0
-        scaler = lambda_min_ratio ** (1 / n_lambda)
-        return lambda_max * (scaler ** np.array(range(n_lambda)))
