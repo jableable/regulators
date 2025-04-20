@@ -4,7 +4,7 @@ from typing import Optional, Callable, Literal
 import numpy as np
 import pandas as pd
 
-from pysyncon.base import BaseSynth
+from my_pysyncon.base import BaseSynth
 
 
 class ConformalInference:
