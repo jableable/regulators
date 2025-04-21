@@ -57,10 +57,10 @@ We employ an augmented synthetic control, allowing for both positive and negativ
 
 In addition to further model refinements for improved pre-treatment fits, increased fit stability across treated units, we identify several avenues for future study:
 
--**Anticipation effects from RGGI**: RGGI was signed by seven of its constituent states in 2005, and over the following years, additional states joined the initiative. It was not until 2008 that the first auction was held, and only in 2009—which we have taken as our nominal treatment start year—was compliance enforced. It is possible that treatment effects may have occurred in anticipation of this first auction.
--**Interaction effects from electricity markets**: Electricity markets extend beyond state borders. While our energy production and energy use features provide provide a low-order picture of the total energy flowing into or out of a state, the interaction between electricity markets in RGGI and non-RGGI states may bias our findings.
--**Cost-effectiveness of RGGI**: Our project evaluates the statistical significance of the implementation of RGGI on member states. Next steps include quantifying the cost-effectiveness of RGGI in comparison to alternative emissions reduction policies.
--**Alternative outcome measures**: We hope to provide a more comprehensive assessment of RGGI's impact by exploring other outcomes besides CO2 emissions such as particulate emissions, NOX, ozone, and other factors in air pollution. 
+- **Anticipation effects from RGGI**: RGGI was signed by seven of its constituent states in 2005, and over the following years, additional states joined the initiative. It was not until 2008 that the first auction was held, and only in 2009—which we have taken as our nominal treatment start year—was compliance enforced. It is possible that treatment effects may have occurred in anticipation of this first auction.
+- **Interaction effects from electricity markets**: Electricity markets extend beyond state borders. While our energy production and energy use features provide provide a low-order picture of the total energy flowing into or out of a state, the interaction between electricity markets in RGGI and non-RGGI states may bias our findings.
+- **Cost-effectiveness of RGGI**: Our project evaluates the statistical significance of the implementation of RGGI on member states. Next steps include quantifying the cost-effectiveness of RGGI in comparison to alternative emissions reduction policies.
+- **Alternative outcome measures**: We hope to provide a more comprehensive assessment of RGGI's impact by exploring other outcomes besides CO2 emissions such as particulate emissions, NOX, ozone, and other factors in air pollution. 
 
 
 ## Description of Repository
