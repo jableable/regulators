@@ -166,7 +166,7 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
 
         n_cov = X0_arr.shape[0]
 
-        # 🔍 Learn V using outer optimization (just like Synth)
+        # Learn V using outer optimization (just like Synth)
         def outer_loss(log_v_diag):
             v_diag = np.exp(log_v_diag)
             V = np.diag(v_diag / np.sum(v_diag))
@@ -174,8 +174,10 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
             loss = (Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W) / len(Z0_arr)
             return loss.item()
 
-        # Initial guess: log(1) = 0 for all entries
-        res = minimize(outer_loss, x0=np.zeros(n_cov), method='Nelder-Mead', options={"maxiter": 1000})
+        # Initial guess
+        v0 = np.full(n_cov, 1 / n_cov)
+        x0 = np.log(v0)
+        res = minimize(outer_loss, x0=x0, method='Nelder-Mead', options={"maxiter": 1000})
         v_diag_opt = np.exp(res.x)
         V_opt = np.diag(v_diag_opt / np.sum(v_diag_opt))
         self.V = np.diag(V_opt)  # Save diagonal of V
@@ -206,9 +208,11 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         return M @ N @ B
 
 
-    def cross_validate(self, X0: pd.DataFrame, X1: pd.Series, lambdas: np.ndarray, holdout_len: int = 1) -> CrossValidationResult:
+    def cross_validate(self, X0: pd.DataFrame, X1: pd.Series, lambdas: np.ndarray, holdout_len: int = 5) -> CrossValidationResult:
         # Create identity matrix for the training portion.
         T = X0.shape[0]
+        T_alt = X0.shape
+        print('T=',T,'T_alt=',T_alt)
         V = np.identity(T - holdout_len)
         res = []
         for X0_t, X0_v, X1_t, X1_v in HoldoutSplitter(X0, X1, holdout_len=holdout_len):
