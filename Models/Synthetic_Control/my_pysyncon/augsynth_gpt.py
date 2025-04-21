@@ -49,6 +49,26 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         Z1_normal = Z1_demean.divide(Z0_std, axis=0) * X0_std
         return X0_demean, X1_demean, Z0_normal, Z1_normal
     
+    def project_to_simplex(self, W_aug: np.ndarray) -> np.ndarray:
+        """
+        Project W_aug back onto the simplex:
+        - All elements >= 0
+        - Sum of elements == 1
+        """
+        n = W_aug.shape[0]
+
+        def objective(w):
+            return np.sum((w - W_aug) ** 2)  # minimize Euclidean distance to W_aug
+
+        constraints = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
+        bounds = [(0.0, 1.0) for _ in range(n)]
+        result = minimize(objective, W_aug, method='SLSQP', bounds=bounds, constraints=constraints)
+
+        if not result.success:
+            raise ValueError("Projection to simplex failed:", result.message)
+
+        return result.x
+
     def fit(
         self,
         dataprep: Dataprep,
@@ -104,22 +124,27 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
                                         # I THINK THEY SHOULD BUT COULDN'T HURT TO TEST
 
           
-        alpha = .5  # Total regularization strength; would be .5 but for computation restrictions
-        rho = 0.2    # Balance: 1.0 = pure L1, 0.0 = pure L2
+        alpha = .1  # Total regularization strength
+        rho = 0.75    # Balance: 1.0 = pure L1, 0.0 = pure L2
 
         def outer_loss(log_v_diag):
+            # Exponentiate and normalize v_diag
             v_diag = np.exp(log_v_diag)
-            V = np.diag(v_diag / np.sum(v_diag))
+            v_norm = v_diag / np.sum(v_diag)
+            V = np.diag(v_norm)
+
+            # Compute synthetic control weights with current V
             W, _ = self.w_optimize(V_mat=V, X0=X0_arr, X1=X1_arr)
-            
-            # Reconstruction error
-            loss = ((Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W)) / len(Z0_arr)
-            
-            # Elastic net penalty
-            l1_penalty = np.sum(np.abs(v_diag))
-            l2_penalty = np.sum(v_diag ** 2)
+
+            # Reconstruction loss (MSE)
+            residual = Z1_arr - Z0_arr @ W
+            loss = (residual.T @ residual) / len(Z0_arr)
+
+            # Elastic net penalty on normalized V weights
+            l1_penalty = np.sum(np.abs(v_norm))
+            l2_penalty = np.sum(v_norm ** 2)
             penalty = alpha * (rho * l1_penalty + (1 - rho) * l2_penalty)
-            
+
             return loss.item() + penalty
 
         n_cov = X0.shape[0]
@@ -141,9 +166,9 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
             self.lambda_ = self.cv_result.best_lambda()
         else:
             self.lambda_ = lambda_
-
         W_ridge = self.solve_ridge(X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_)
-        self.W = W + W_ridge
+        beta = 1
+        self.W = W + beta * W_ridge
 
 
     def solve_ridge(
@@ -232,5 +257,37 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         })
 
         return summary_df.round(round)
+    
+
+    def post_treatment_synthetic_ratio(self, treatment_date: str) -> float:
+        """
+        Computes the ratio of the post-treatment cumulative synthetic outcome
+        to the post-treatment cumulative treated outcome.
+
+        Parameters:
+            treatment_date (str): The intervention date in 'YYYY-MM-DD' format.
+
+        Returns:
+            float: Ratio of synthetic post-treatment sum to treated post-treatment sum.
+        """
+        if self.Z0 is None or self.Z1 is None or self.W is None:
+            raise ValueError("Model must be fit before computing post-treatment synthetic ratio.")
+
+        synth_series = self.Z0.T @ self.W  # shape: (T,) Series-like
+        treated_series = self.Z1  # shape: (T,) Series
+
+        # Ensure datetime index
+        synth_series.index = pd.to_datetime(synth_series.index)
+        treated_series.index = pd.to_datetime(treated_series.index)
+
+        post_mask = synth_series.index >= pd.to_datetime(treatment_date)
+        synth_sum = synth_series.loc[post_mask].sum()
+        treated_sum = treated_series.loc[post_mask].sum()
+
+        if treated_sum == 0:
+            raise ZeroDivisionError("Sum of post-treatment treated outcomes is zero.")
+
+        return synth_sum / treated_sum
+
 
 
