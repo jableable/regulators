@@ -1,6 +1,6 @@
 # TEAM WHO REGULATES THE REGULATORS?<br>Evaluating CO2 Emissions Reduction Programs
 
-Our primary goal was to ...
+
 
 <!-- ## About Team Who Regulates the Regulators?
 Team members: Jared Able, Joshua Jackson, Zachary Brennan, Alexandria Wheeler, Nicholas Geiser
