@@ -23,11 +23,11 @@ RGGI's causal effect in each state-year is the difference between actual emissio
 
 ## Dataset Generation
 
-Our dataset combines EPA emissions data (1995-2020) with economic, demographic, and meteorological data—such as GDP, population size, electricity usage, and temperature—as some key covariates of emissions. It also combines yearly emissions data from the Energy Information Administration (EIA) extending back to 1990. 
-
+Our dataset combines EPA emissions data (1995-2020) with economic, demographic, and meteorological data—such as GDP, population size, electricity usage, and temperature—as some key covariates of emissions. A complete description of the variables can be found in `total_state_data_info`
 
 
 ## Exploratory Data Analysis
+
 
 
 
