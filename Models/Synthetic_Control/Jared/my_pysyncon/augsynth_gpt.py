@@ -85,17 +85,16 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         ## WE SWAP THE ROLES OF X0/X1 WITH Z0/Z1 TO ALIGN WITH CONVENTIONS
         X0, X1 = dataprep.make_covariate_mats()
         Z0, Z1 = dataprep.make_outcome_mats()
-        print('Z0 has shape', Z0.shape)
         self.Z0, self.Z1 = Z0, Z1
 
         Z0_demean, Z1_demean, X0_normal, X1_normal = self._normalize(Z0, Z1, X0, X1)
         #X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
 
-        print('Z0_demean has shape', Z0_demean.shape)
-
         # Stack for ridge adjustment
         X0_stacked = pd.concat([Z0_demean, X0_normal], axis=0)  # NOT SURE IF THE ORDER IS CORRECT
         X1_stacked = pd.concat([Z1_demean, X1_normal], axis=0)  
+        #X0_stacked = pd.concat([X0_normal, Z0_demean], axis=0)  # NOT SURE IF THE ORDER IS CORRECT
+        #X1_stacked = pd.concat([X1_normal, Z1_demean], axis=0)  
 
         # Convert for inner optimization
         X0_arr = X0_normal.to_numpy()
@@ -104,15 +103,24 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         Z1_arr = Z1_demean.to_numpy()   # THESE ARE USED IN OUTER LOSS OPTIMIZATION BELOW
                                         # I THINK THEY SHOULD BUT COULDN'T HURT TO TEST
 
-  
+          
+        alpha = .5  # Total regularization strength; would be .5 but for computation restrictions
+        rho = 0.2    # Balance: 1.0 = pure L1, 0.0 = pure L2
 
-        # Outer optimization to learn V (as before)
         def outer_loss(log_v_diag):
             v_diag = np.exp(log_v_diag)
             V = np.diag(v_diag / np.sum(v_diag))
             W, _ = self.w_optimize(V_mat=V, X0=X0_arr, X1=X1_arr)
-            loss = (Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W) / len(Z0_arr)
-            return loss.item()
+            
+            # Reconstruction error
+            loss = ((Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W)) / len(Z0_arr)
+            
+            # Elastic net penalty
+            l1_penalty = np.sum(np.abs(v_diag))
+            l2_penalty = np.sum(v_diag ** 2)
+            penalty = alpha * (rho * l1_penalty + (1 - rho) * l2_penalty)
+            
+            return loss.item() + penalty
 
         n_cov = X0.shape[0]
         x0 = np.log(np.full(n_cov, 1 / n_cov))
@@ -212,10 +220,6 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         # Calculate the variance and skewness of each predictor (row-wise across units)
         predictor_variance = X0.var(axis=1)
         predictor_skewness = X0.skew(axis=1)
-
-
-        print('V is of size',self.V.shape)
-        print('V looks like:', self.V)
               
         # Create a summary DataFrame
         summary_df = pd.DataFrame({
