@@ -25,6 +25,8 @@ RGGI's causal effect in each state-year is the difference between actual emissio
 
 Our dataset combines EPA emissions data (1995-2020) with economic, demographic, and meteorological data—such as GDP, population size, electricity usage, and temperature—as some key covariates of emissions. It also combines yearly emissions data from the Energy Information Administration (EIA) extending back to 1990. 
 
+
+
 ## Exploratory Data Analysis
 
 
@@ -33,7 +35,7 @@ Our dataset combines EPA emissions data (1995-2020) with economic, demographic, 
 
 This analysis employs synthetic control methods, which allow one to estimate the effect of an intervention when a direct control group isn’t available. Specifically, a synthetic control is constructed by assigning optimized weights to a set of control states. These weights are chosen to minimize the differences between the synthetic and treated state before the intervention. 
 
-We employ an augmented synthetic control, allowing for both positive and negative weights in order to increase model accuracy. With an intervention date of January 1, 2009, the model was trained on data from 1999 to 2009 and evaluated from 2009 to 2014. The model uses 10 transformed features and a donor pool of 33 non-RGGI control states. Model tuning prioritized the alignment of covariates of the real and synthetic across model features and included efforts to reduce skewness of the data. Finally, the 7 selected RGGI states offer robust data for validation and testing.
+We employ an augmented synthetic control, allowing for both positive and negative weights in order to increase model accuracy, as described in Ben-Michael, Feller, and Rothstein [(2021)](https://doi.org/10.1080/01621459.2021.1929245). With an intervention date of January 1, 2009, the model was trained on data from 1999 to 2009 and evaluated from 2009 to 2014. The model uses 10 transformed features and a donor pool of 33 non-RGGI control states. Model tuning prioritized the alignment of covariates of the real and synthetic across model features and included efforts to reduce skewness of the data. Finally, the 7 selected RGGI states offer robust data for validation and testing.
 
 ## Results
 
