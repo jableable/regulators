@@ -17,10 +17,13 @@ Team members: Jared Able, Joshua Jackson, Zachary Brennan, Alexandria Wheeler, N
 
 ## Introduction
 
+The [Regional Greenhouse Gas Initiative](https://www.rggi.org)(RGGI) is an emissions trading system among northeastern US states to reduce carbon dioxide emissions from electric power generation. This project analyzes the causal effect of RGGI on carbon dioxide emissions from 2009 to 2014 using a synthetic control technique for the states in RGGI during this initial period.  
+
+RGGI's causal effect in each state-year is the difference between actual emissions and the potential emissions that would have occurred had RGGI not been implemented. Estimating RGGI's causal effect therefore requires estimating this potential outcome as well as data on actual emissions in RGGI states. Unfortunately, we do not directly observe this counterfactual outcome. The synthetic control method, originally developed by Abadie and Gardeazabal [(2003)](https://doi.org/10.1257/000282803321455188), estimates the counterfactual by constructing a control on the basis of a weighted combination of actual controls that minimizes the difference between the treated unit and the synthetic control on the outcome variable. These weights are chosen to minimize the differences between the synthetic and treated state before the intervention. 
 
 ## Dataset Generation
 
-Our dataset combines EPA emissions data (1995-2020) with economic, demographic, and meteorological data—such as GDP, population size, electricity usage, and temperature—as some key covariates of emissions.
+Our dataset combines EPA emissions data (1995-2020) with economic, demographic, and meteorological data—such as GDP, population size, electricity usage, and temperature—as some key covariates of emissions. It also combines yearly emissions data from the Energy Information Administration (EIA) extending back to 1990. 
 
 ## Exploratory Data Analysis
 
