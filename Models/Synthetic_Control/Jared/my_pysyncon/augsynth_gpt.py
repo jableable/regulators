@@ -36,21 +36,17 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
     ) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
         """Normalize the data before the weight calculation."""
 
-        # Demean the covariates (predictors)
         X0_demean = X0.subtract(X0.mean(axis=1), axis=0)
         X1_demean = X1.subtract(X0.mean(axis=1), axis=0)
 
-        # Demean the outcome
         Z0_demean = Z0.subtract(Z0.mean(axis=1), axis=0)
         Z1_demean = Z1.subtract(Z0.mean(axis=1), axis=0)
 
-        # Normalize the outcome to match the scale of the predictors
         Z0_std = Z0_demean.std(axis=1)
         X0_std = X0_demean.to_numpy().std(ddof=1).item()
 
         Z0_normal = Z0_demean.divide(Z0_std, axis=0) * X0_std
         Z1_normal = Z1_demean.divide(Z0_std, axis=0) * X0_std
-
         return X0_demean, X1_demean, Z0_normal, Z1_normal
     
     def fit(
@@ -85,23 +81,30 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         # Following Synth, we let:
         #    X0, X1 = predictors (controls and treated, respectively)
         #    Z0, Z1 = outcomes (controls and treated, for evaluation).
+
+        ## WE SWAP THE ROLES OF X0/X1 WITH Z0/Z1 TO ALIGN WITH CONVENTIONS
         X0, X1 = dataprep.make_covariate_mats()
         Z0, Z1 = dataprep.make_outcome_mats()
+        print('Z0 has shape', Z0.shape)
         self.Z0, self.Z1 = Z0, Z1
 
-        X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
+        Z0_demean, Z1_demean, X0_normal, X1_normal = self._normalize(Z0, Z1, X0, X1)
+        #X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
+
+        print('Z0_demean has shape', Z0_demean.shape)
 
         # Stack for ridge adjustment
-        X0_stacked = pd.concat([X0_demean, Z0_normal], axis=0)
-        X1_stacked = pd.concat([X1_demean, Z1_normal], axis=0)
+        X0_stacked = pd.concat([Z0_demean, X0_normal], axis=0)  # NOT SURE IF THE ORDER IS CORRECT
+        X1_stacked = pd.concat([Z1_demean, X1_normal], axis=0)  
 
         # Convert for inner optimization
-        X0_arr = X0_demean.to_numpy()
-        X1_arr = X1_demean.to_numpy()
-        Z0_arr = Z0.to_numpy()
-        Z1_arr = Z1.to_numpy()
+        X0_arr = X0_normal.to_numpy()
+        X1_arr = X1_normal.to_numpy()
+        Z0_arr = Z0_demean.to_numpy()   # NOT SURE ABOUT WHETHER Z0/Z1 SHOULD BE NORMALIZED
+        Z1_arr = Z1_demean.to_numpy()   # THESE ARE USED IN OUTER LOSS OPTIMIZATION BELOW
+                                        # I THINK THEY SHOULD BUT COULDN'T HURT TO TEST
 
-        n_cov = X0_arr.shape[0]
+  
 
         # Outer optimization to learn V (as before)
         def outer_loss(log_v_diag):
@@ -111,12 +114,8 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
             loss = (Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W) / len(Z0_arr)
             return loss.item()
 
-        if optim_initial == "equal":
-            x0 = np.log(np.full(n_cov, 1 / n_cov))
-        elif optim_initial == "ols":
-            x0 = np.log(np.full(n_cov, 1 / n_cov))
-        else:
-            raise ValueError("Unknown option for optim_initial.")
+        n_cov = X0.shape[0]
+        x0 = np.log(np.full(n_cov, 1 / n_cov))
 
         res = minimize(outer_loss, x0=x0, method=optim_method, options=optim_options)
         v_diag_opt = np.exp(res.x)
@@ -130,65 +129,7 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         if lambda_ is None:
             lambdas = self.generate_lambdas(X0)
             # Pass the pandas objects (X0_demean, X1_demean) to cross_validate
-            self.cv_result = self.cross_validate(X0_demean, X1_demean, lambdas)
-            self.lambda_ = self.cv_result.best_lambda()
-        else:
-            self.lambda_ = lambda_
-
-        W_ridge = self.solve_ridge(X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_)
-        self.W = W + W_ridge
-
-    def fit2(self, dataprep: Dataprep, lambda_: Optional[float] = None) -> None:
-        if (
-            isinstance(dataprep.treatment_identifier, (list, tuple)) and
-            len(dataprep.treatment_identifier) > 1
-        ):
-            raise ValueError("AugSynth requires exactly one treated unit.")
-
-        self.dataprep = dataprep
-
-        # Get predictor (covariate) matrices and outcomes
-        X0, X1 = dataprep.make_covariate_mats()
-        Z0, Z1 = dataprep.make_outcome_mats()
-        self.Z0, self.Z1 = Z0, Z1  # Save for MSPE or plotting
-
-        # Normalize predictors and outcomes
-        X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
-
-        # Stack for ridge adjustment
-        X0_stacked = pd.concat([X0_demean, Z0_normal], axis=0)
-        X1_stacked = pd.concat([X1_demean, Z1_normal], axis=0)
-
-        X0_arr = X0_demean.to_numpy()
-        X1_arr = X1_demean.to_numpy()
-        Z0_arr = Z0.to_numpy()
-        Z1_arr = Z1.to_numpy()
-
-        n_cov = X0_arr.shape[0]
-
-        # Learn V using outer optimization (just like Synth)
-        def outer_loss(log_v_diag):
-            v_diag = np.exp(log_v_diag)
-            V = np.diag(v_diag / np.sum(v_diag))
-            W, _ = self.w_optimize(V_mat=V, X0=X0_arr, X1=X1_arr)
-            loss = (Z1_arr - Z0_arr @ W).T @ (Z1_arr - Z0_arr @ W) / len(Z0_arr)
-            return loss.item()
-
-        # Initial guess
-        v0 = np.full(n_cov, 1 / n_cov)
-        x0 = np.log(v0)
-        res = minimize(outer_loss, x0=x0, method='Nelder-Mead', options={"maxiter": 1000})
-        v_diag_opt = np.exp(res.x)
-        V_opt = np.diag(v_diag_opt / np.sum(v_diag_opt))
-        self.V = np.diag(V_opt)  # Save diagonal of V
-
-        # Final inner optimization using learned V
-        W, _ = self.w_optimize(V_mat=V_opt, X0=X0_arr, X1=X1_arr)
-
-        # Ridge adjustment
-        if lambda_ is None:
-            lambdas = self.generate_lambdas(X0)
-            self.cv_result = self.cross_validate(X0_arr, X1_arr, lambdas)
+            self.cv_result = self.cross_validate(Z0_demean, Z1_demean, lambdas)
             self.lambda_ = self.cv_result.best_lambda()
         else:
             self.lambda_ = lambda_
@@ -212,7 +153,6 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         # Create identity matrix for the training portion.
         T = X0.shape[0]
         T_alt = X0.shape
-        print('T=',T,'T_alt=',T_alt)
         V = np.identity(T - holdout_len)
         res = []
         for X0_t, X0_v, X1_t, X1_v in HoldoutSplitter(X0, X1, holdout_len=holdout_len):
@@ -247,40 +187,7 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         return lambda_max * (scaler ** np.array(range(n_lambda)))
     
 
-    def summary(
-        self,
-        round: int = 3,
-        X0: Optional[pd.DataFrame] = None,
-        X1: Optional[pd.Series] = None,
-    ) -> pd.DataFrame:
-        """Summary of predictor balance and V weights for AugSynth."""
 
-        if self.V is None:
-            raise ValueError("No V matrix available; fit model first.")
-
-        # If not explicitly passed, use the data stored in self.dataprep
-        if self.dataprep is not None:
-            X0, X1 = self.dataprep.make_covariate_mats()
-        elif X0 is None or X1 is None:
-            raise ValueError("No dataprep or covariate matrices provided.")
-
-        if not isinstance(X0, pd.DataFrame) or not isinstance(X1, pd.Series):
-            raise TypeError("X0 must be a DataFrame and X1 must be a Series.")
-
-        # Compute synthetic values using weights
-        synth_vals = X0 @ self.W
-
-        # Compute equal-weighted sample mean
-        sample_mean = X0.mean(axis=1)
-
-        summary_df = pd.DataFrame({
-            "V": self.V,
-            "Treated": X1,
-            "Synthetic": synth_vals,
-            "Sample Mean": sample_mean,
-        })
-
-        return summary_df.round(round)
     
     def summary_with_variance(self, round: int = 3, X0: Optional[pd.DataFrame] = None, X1: Optional[pd.Series] = None) -> pd.DataFrame:
         """Extended summary that includes the variance and skewness of each covariate."""
@@ -306,9 +213,13 @@ class AugSynthGPT(BaseSynth, VanillaOptimMixin):
         predictor_variance = X0.var(axis=1)
         predictor_skewness = X0.skew(axis=1)
 
+
+        print('V is of size',self.V.shape)
+        print('V looks like:', self.V)
+              
         # Create a summary DataFrame
         summary_df = pd.DataFrame({
-            "V": self.V,  # V weights per predictor
+            "V": self.V[:X0.shape[0]],  # V weights per predictor
             "Treated": X1,
             "Synthetic": synth_vals,
             "Sample Mean": sample_mean,
