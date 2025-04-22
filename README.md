@@ -1,7 +1,5 @@
 # WHO REGULATES THE REGULATORS?<br>Evaluating CO2 Emissions Reduction Programs
 
-
-
 <!-- ## About Team Who Regulates the Regulators?
 Team members: Jared Able, Joshua Jackson, Zachary Brennan, Alexandria Wheeler, Nicholas Geiser
 -->
@@ -37,10 +35,13 @@ Further processing includes the application of twelve-month moving averages on a
 
 A catalogue of features and their sources may be found in `SharedData/total_state_data_info.csv`.
 
-
 ## Exploratory Data Analysis
 
-Our exploratory analysis focused on 
+Our exploratory analysis focused on visualizing pollution data from various US states and energy flows among US states. In addition, we explored data quality issues and applied winsoriation corrections to CO2 emissions data (our primary dependent variable). 
+
+![PM 2.5 Measurements](./Assets/LA_particulates.png "PM 2.5 Measurements")
+
+![Nitrogen Dioxide in PA](./Assets/NO2_AQI.png "Nitrogen Dioxide in PA")
 
 
 ## Modeling Approach
