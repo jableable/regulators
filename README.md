@@ -37,7 +37,7 @@ A catalogue of features and their sources may be found in `SharedData/total_stat
 
 ## Exploratory Data Analysis
 
-Our exploratory analysis focused on visualizing pollution data from various US states and energy flows among US states. In addition, we explored data quality issues and applied winsoriation corrections to CO2 emissions data (our primary dependent variable). 
+Our exploratory analysis focused on visualizing pollution data from various US states and energy flows among US states. 
 
 ![PM 2.5 Measurements](./Assets/LA_particulates.png "PM 2.5 Measurements")
 
@@ -46,6 +46,8 @@ Our exploratory analysis focused on visualizing pollution data from various US s
 ![CO2 Emissions in NY](./Assets/TotalCO2EmissionsNY.png "CO2 Emissions in NY")
 
 ![Emissions Correlations](./Assets/EmissionsCorrelations.png "State Emissions")
+
+In addition, we explored data quality issues and applied winsorization corrections to CO2 emissions data (our primary dependent variable). The goal of this was to remove extreme values and de-noise our data.
 
 We also explored a naïve time-series forecast for the state of Delaware:
 
