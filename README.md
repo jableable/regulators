@@ -57,6 +57,7 @@ We identified gaps between energy consumption and use in each state and explored
 
 ![Energy Autocorrelation Plots](./Assets/EnergyAutocorrelationPlots.png "Energy Autocorrelation")
 
+
 ## Modeling Approach
 
 This analysis employs synthetic control methods, which allow one to estimate the effect of an intervention when a direct control group isn’t available. Specifically, a synthetic control is constructed by assigning optimized weights to a set of control states. These weights are chosen to minimize the differences between the synthetic and treated state before the intervention. 
