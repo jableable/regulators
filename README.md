@@ -40,7 +40,7 @@ A catalogue of features and their sources may be found in `SharedData/total_stat
 
 ## Exploratory Data Analysis
 
-
+Our exploratory analysis focused on 
 
 
 ## Modeling Approach
