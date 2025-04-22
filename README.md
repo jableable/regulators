@@ -76,7 +76,7 @@ The validity of our results was tested using the placebo method, in which we per
 
 ![MA_initial_placebo_test](./Assets/MA_initial_placebo_test.png "MA Placebo Test (initial)")
 
-Afterward, an R2 calculation is performed to evaluate the pre-treatment fit for each treated state. The R2 values from our initial model were poor. For Massachusetts, R2 = 0.26. To improve the pre-treatment fit, an alternative model was developed. The second model dramatically improved our R2 values—in Massachusetts, R2=0.91—but this second model appears to overfit the data, even as it decreases our significance with p = 0.18. Further efforts are required to achieve a balanced fit model and thus establish more reliable significances.
+Afterward, an $R^2$ calculation is performed to evaluate the pre-treatment fit for each treated state. The $R^2$ values from our initial model were poor. For Massachusetts, $R^2$ = 0.26. To improve the pre-treatment fit, an alternative model was developed. The second model dramatically improved our $R^2$ values—in Massachusetts, $R^2$=0.91—but this second model appears to overfit the data, even as it decreases our significance with p = 0.18. Further efforts are required to achieve a balanced fit model and thus establish more reliable significances.
 
 For full results, see the files `Models/Synthetic_Control/*_augsyncon_results.ipynb`.
 
