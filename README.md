@@ -1,5 +1,7 @@
 # WHO REGULATES THE REGULATORS?<br>Evaluating CO2 Emissions Reduction Programs
 
+Team members: [Jared Able](https://github.com/jableable), [Joshua Jackson](https://github.com/joshuamjaxon), [Zachary Brennan](https://github.com/SirBluecat), [Alexandria Wheeler](https://github.com/lmwheeler48), [Nicholas Geiser](https://github.com/nageiser)
+
 <!-- ## About Team Who Regulates the Regulators?
 Team members: Jared Able, Joshua Jackson, Zachary Brennan, Alexandria Wheeler, Nicholas Geiser
 -->
