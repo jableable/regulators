@@ -43,6 +43,19 @@ Our exploratory analysis focused on visualizing pollution data from various US s
 
 ![Nitrogen Dioxide in PA](./Assets/NO2_AQI.png "Nitrogen Dioxide in PA")
 
+![CO2 Emissions in NY](./Assets/TotalCO2EmissionsNY.png "CO2 Emissions in NY")
+
+![Emissions Correlations](./Assets/EmissionsCorrelations.png "State Emissions")
+
+We also explored a naïve time-series forecast for the state of Delaware:
+
+![DE Emissions Forecast](./Assets/DE_emissions_per_capita.png "DE Emissions per capita)
+
+We identified gaps between energy consumption and use in each state and explored energy dat through (partial) autocorrelation plots and stationarity checks for each state. 
+
+![Energy Use and Production](./Assets/energy_use_prod.png "Energy Use and Production")
+
+![Energy Autocorrelation Plots](./Assets/EnergyAutocorrelationPlots.png "Energy Autocorrelation")
 
 ## Modeling Approach
 
