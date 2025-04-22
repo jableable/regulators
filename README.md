@@ -71,6 +71,6 @@ In addition to further model refinements for improved pre-treatment fits, increa
 
 The `initial_studies/` directory contains explorations of government data in a variety of spaces. Though not all of these notebooks are directly relevant to our final project, these notebooks represent our earliest work as we sought a policy dataset suitable for an interesting project. 
 
-**Models/**: Contains notebooks related to our modeling approach. Within `Alternative_Models/`, we include initial attempts at modeling our data with pysyncon and other more common techniques. Within Synthetic_Control, our final fits `*_augsyncon_results.ipynb` and their associated robustness checks are stored in the top level. The directory `my_pysyncon` contains an edited version of the pysyncon package that forms the backbone of this project with changes gearing it towards out specific use case.
+**Models/**: Contains notebooks related to our modeling approach. Within `Alternative_Models/`, we include initial attempts at modeling our data with pysyncon and other more common techniques. Within `Synthetic_Control`, our final fits `*_augsyncon_results.ipynb` and their associated robustness checks are stored in the top level. The directory `my_pysyncon` contains an edited version of the pysyncon package that forms the backbone of this project with changes gearing it towards out specific use case.
 
 **SharedData/**: Stores the intermediate files staged for data cleaning as well as the final total data file `total_state_data.csv` and its metadata `total_state_data_info.csv`.
