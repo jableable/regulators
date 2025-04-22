@@ -49,7 +49,7 @@ Our exploratory analysis focused on visualizing pollution data from various US s
 
 We also explored a naïve time-series forecast for the state of Delaware:
 
-![DE Emissions Forecast](./Assets/DE_emissions_per_capita.png "DE Emissions per capita)
+![DE Emissions Forecast](./Assets/DE_emissions_per_capita.png "DE Emissions per capita")
 
 We identified gaps between energy consumption and use in each state and explored energy dat through (partial) autocorrelation plots and stationarity checks for each state. 
 
