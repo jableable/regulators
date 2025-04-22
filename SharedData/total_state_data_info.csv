@@ -10,9 +10,9 @@ yearly_population  ,Range over 1990-01 thru 2019-12,,All values outside of date 
 monthly_pop_density  ,monthly_pop / state_sq_ft,,All values outside of date range,,https://data.census.gov/
 yearly_pop_density  ,yearly_pop / state_sq_ft,,All values outside of date range,,https://data.census.gov/
 monthly_emissions_sma  ,Obtained from monthly_emissions as SMA with window=12,Short tons,Those missing due to SMA calculation,This isn't currently used anywhere (?),
-prcp  ,Rain? Maybe sleet?,In?,Ask Josh,,https://www.ncei.noaa.gov/cdo-web/search
-snow  ,Snow,In?,Ask Josh,,https://www.ncei.noaa.gov/cdo-web/search
-tavg  ,Average monthly temp,Deg?,Ask Josh,,https://www.ncei.noaa.gov/cdo-web/search
+prcp  ,Precipitation,In,None. Random missing values were imputed from adjacent years, Documentation is not clear on what constitutes precipitation,https://www.ncei.noaa.gov/cdo-web/search
+snow  ,Snow,In,None. Any missing values were set to zero,,https://www.ncei.noaa.gov/cdo-web/search
+tavg  ,Average monthly temp,Deg F,None. Random missing values imputed,,https://www.ncei.noaa.gov/cdo-web/search
 gdp_rel_2017  ,GDP adjusted for inflation relative to 2017,Millions of USD,MANY values missing; values present for month=12 within years 1997-2023,Used to generate gdp_rel_2017_interp and yearly_gpd_rel_2017,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
 monthly_gdp_rel_2017,"Obtained from yearly_gdp_rel_2017 by linear interpolation, then / 12",Millions of USD (rel 2017),All values outside of date range,,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
 yearly_gdp_rel_2017  ,Obtained from gdp_rel_2017 by interpolation of copying value,Millions of USD (rel 2017),All values outside of date range,,https://apps.bea.gov/histdatacore/HistFileDetails.html?HistCateID=1&FileGroupID=298
