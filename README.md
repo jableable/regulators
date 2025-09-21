@@ -1,5 +1,7 @@
 # WHO REGULATES THE REGULATORS?<br>Evaluating CO2 Emissions Reduction Programs
 
+Team members: [Jared Able](https://github.com/jableable), [Joshua Jackson](https://github.com/joshuamjaxon), [Zachary Brennan](https://github.com/SirBluecat), [Alexandria Wheeler](https://github.com/lmwheeler48), [Nicholas Geiser](https://github.com/nageiser)
+
 <!-- ## About Team Who Regulates the Regulators?
 Team members: Jared Able, Joshua Jackson, Zachary Brennan, Alexandria Wheeler, Nicholas Geiser
 -->
@@ -15,7 +17,7 @@ Team members: Jared Able, Joshua Jackson, Zachary Brennan, Alexandria Wheeler, N
 
 ## Introduction
 
-The [Regional Greenhouse Gas Initiative](https://www.rggi.org)(RGGI) is an emissions trading system among northeastern US states to reduce carbon dioxide emissions from electric power generation. This project analyzes the causal effect of RGGI on carbon dioxide emissions from 2009 to 2014 using a synthetic control technique for the states in RGGI during this initial period.  
+The [Regional Greenhouse Gas Initiative](https://www.rggi.org) (RGGI) is an emissions trading system among northeastern US states to reduce carbon dioxide emissions from electric power generation. This project analyzes the causal effect of RGGI on carbon dioxide emissions from 2009 to 2014 using a synthetic control technique for the states in RGGI during this initial period.  
 
 RGGI's causal effect in each state-year is the difference between actual emissions and the potential emissions that would have occurred had RGGI not been implemented. Estimating RGGI's causal effect therefore requires estimating this potential outcome as well as data on actual emissions in RGGI states. Unfortunately, we do not directly observe this counterfactual outcome. The synthetic control method, originally developed by Abadie and Gardeazabal [(2003)](https://doi.org/10.1257/000282803321455188), estimates the counterfactual by constructing a control on the basis of a weighted combination of actual controls that minimizes the difference between the treated unit and the synthetic control on the outcome variable. These weights are chosen to minimize the differences between the synthetic and treated state before the intervention. 
 
@@ -92,6 +94,8 @@ In addition to further model refinements for improved pre-treatment fits, increa
 
 ## Description of Repository
 
+**Assets/**: Contains images for the README file. 
+
 **Dataset_Generation/**: Contains notebooks for reading in raw data collected from the sources defined in [Dataset Generation](#Dataset-Generation), correcting and cleaning them, and finally combining them into a common CSV file that can be used throughout our analysis.
 
 **EDA/**: Contains a variety of notebooks investigating various facets of our data. These include checks for outliers, correlations, data quality, and energy flow visualizations. We also include time series-focused notebooks, including stationarity checks and ARIMA forecasting to estimate confidence levels in the post-treatment range. 
@@ -99,5 +103,7 @@ In addition to further model refinements for improved pre-treatment fits, increa
 The `initial_studies/` directory contains explorations of government data in a variety of spaces. Though not all of these notebooks are directly relevant to our final project, these notebooks represent our earliest work as we sought a policy dataset suitable for an interesting project. 
 
 **Models/**: Contains notebooks related to our modeling approach. Within `Alternative_Models/`, we include initial attempts at modeling our data with pysyncon and other more common techniques. Within `Synthetic_Control`, our final fits `*_augsyncon_results.ipynb` and their associated robustness checks are stored in the top level. The directory `my_pysyncon` contains an edited version of the pysyncon package that forms the backbone of this project with changes gearing it towards out specific use case.
+
+**Presentation/**: Contains the project Executive Summary and presentation PowerPoint slides.
 
 **SharedData/**: Stores the intermediate files staged for data cleaning as well as the final total data file `total_state_data.csv` and its metadata `total_state_data_info.csv`.
